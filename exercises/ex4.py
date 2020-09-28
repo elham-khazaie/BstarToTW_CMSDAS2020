@@ -121,6 +121,7 @@ def select(setname,year):
     a.Cut('eta_cut','abs(FatJet_eta[jetIdx[0]]) < 2.4 && abs(FatJet_eta[jetIdx[1]]) < 2.4')
     a.Cut('mjet_cut','FatJet_msoftdrop[jetIdx[0]] > 50 && FatJet_msoftdrop[jetIdx[1]] > 50')
     a.Cut('mtw_cut','analyzer::invariantMass(jetIdx[0],jetIdx[1],FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop) > 1200')
+    a.Cut('lead_tau21_cut','(FatJet_tau1[jetIdx[0]] > 0 ? FatJet_tau2[jetIdx[0]]/FatJet_tau1[jetIdx[0]] : -1) < 0.4')
     ## Add cut right above here
     a.Define('deltaphi','analyzer::deltaPhi(FatJet_phi[jetIdx[0]],FatJet_phi[jetIdx[1]])')
     a.Define('sublead_jetmass','FatJet_mass[jetIdx[1]]')
@@ -139,6 +140,8 @@ def select(setname,year):
     for varname in varnames.keys():
         histname = '%s_%s_%s'%(setname,year,varname)
         ## Actually your problem begins here. The indentation is wrong
+        if "tau_cut" in varname :
+            hist_tuple = (histname,histname,20,0,1)
         if "deltaphi" in varname :
             hist_tuple = (histname,histname,100,-3.2,3.2)
         if "mass" in varname :
@@ -147,7 +150,8 @@ def select(setname,year):
             hist_tuple = (histname,histname,20,0,1)
         if "pt" in varname : # this is one of the problems, it should be 'pt' not 'Pt' (remember to match the keys as I wrote above)
             hist_tuple = (histname,histname,30,400,1000)
-
+        print varname
+        print hist_tuple 
         ## To add a new var/histogram, add the correct keyword (ex. pt or deltaphi) that matches what you defined in step 1/3
         ## and set the right histogram arguments hist_tuple = (histname,histname, nBins, lowRange, highRange). Step 3/3
 

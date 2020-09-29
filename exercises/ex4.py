@@ -80,13 +80,7 @@ else:
     triggers = ["HLT_PFHT1050","HLT_PFJet500","HLT_AK8PFJet380_TrimMass30","HLT_AK8PFJet400_TrimMass30"]
 
 # Variables we want to plot (need to be constructed as variables in the RDataFrame)
-## To add an additional variable/hist make sure you add the key here. The key (ex. lead_jetmass) needs to match elsewhere in the code below. (Step 1/3)
 varnames = {
-        'deltaphi':'#Delta#phi_{lead,sublead}',
-        'sublead_jetmass':'Jet Mass',
-        'lead_jetmass':'Jet Mass', 
-        'sublead_pt':'sublead p_{T}',
-        'lead_pt':'lead p_{T}',
         'lead_tau32':'#tau_{32}^{jet0}',
         'sublead_tau32':'#tau_{32}^{jet1}',
         'lead_tau21':'#tau_{21}^{jet0}',
@@ -111,7 +105,6 @@ def select(setname,year):
         norm = 1.
 
     # Book actions on the RDataFrame
-    ## If you want to ass a cut you have to define it below
     a.Cut('filters',a.GetFlagString(flags))
     a.Cut('trigger',a.GetTriggerString(triggers))
     a.Define('jetIdx','hemispherize(FatJet_phi, FatJet_jetId)') # need to calculate if we have two jets (with Id) that are back-to-back
@@ -121,41 +114,17 @@ def select(setname,year):
     a.Cut('eta_cut','abs(FatJet_eta[jetIdx[0]]) < 2.4 && abs(FatJet_eta[jetIdx[1]]) < 2.4')
     a.Cut('mjet_cut','FatJet_msoftdrop[jetIdx[0]] > 50 && FatJet_msoftdrop[jetIdx[1]] > 50')
     a.Cut('mtw_cut','analyzer::invariantMass(jetIdx[0],jetIdx[1],FatJet_pt,FatJet_eta,FatJet_phi,FatJet_msoftdrop) > 1200')
-    a.Cut('lead_tau21_cut','(FatJet_tau1[jetIdx[0]] > 0 ? FatJet_tau2[jetIdx[0]]/FatJet_tau1[jetIdx[0]] : -1) < 0.4')
-    ## Add cut right above here
-    a.Define('deltaphi','analyzer::deltaPhi(FatJet_phi[jetIdx[0]],FatJet_phi[jetIdx[1]])')
-    a.Define('sublead_jetmass','FatJet_mass[jetIdx[1]]')
-    a.Define('lead_jetmass','FatJet_mass[jetIdx[0]]')
-    a.Define('sublead_pt','FatJet_pt[jetIdx[1]]')
-    a.Define('lead_pt','FatJet_pt[jetIdx[0]]')
     a.Define('lead_tau32','FatJet_tau2[jetIdx[0]] > 0 ? FatJet_tau3[jetIdx[0]]/FatJet_tau2[jetIdx[0]] : -1') # Conditional to make sure tau2 != 0 for division
     a.Define('sublead_tau32','FatJet_tau2[jetIdx[1]] > 0 ? FatJet_tau3[jetIdx[1]]/FatJet_tau2[jetIdx[1]] : -1') # condition ? <do if true> : <do if false>
     a.Define('lead_tau21','FatJet_tau1[jetIdx[0]] > 0 ? FatJet_tau2[jetIdx[0]]/FatJet_tau1[jetIdx[0]] : -1') # Conditional to make sure tau2 != 0 for division
     a.Define('sublead_tau21','FatJet_tau1[jetIdx[1]] > 0 ? FatJet_tau2[jetIdx[1]]/FatJet_tau1[jetIdx[1]] : -1') # condition ? <do if true> : <do if false>
-    ## Add any new variable/histogram right above here (Step 2/3)
     a.Define('norm',str(norm))
 
     # Book a group to save the histograms
     out = HistGroup("%s_%s"%(setname,year))
     for varname in varnames.keys():
         histname = '%s_%s_%s'%(setname,year,varname)
-        ## Actually your problem begins here. The indentation is wrong
-        if "tau_cut" in varname :
-            hist_tuple = (histname,histname,20,0,1)
-        if "deltaphi" in varname :
-            hist_tuple = (histname,histname,100,-3.2,3.2)
-        if "mass" in varname :
-            hist_tuple = (histname,histname,20,0,1000)
-        if "tau" in varname :
-            hist_tuple = (histname,histname,20,0,1)
-        if "pt" in varname : # this is one of the problems, it should be 'pt' not 'Pt' (remember to match the keys as I wrote above)
-            hist_tuple = (histname,histname,30,400,1000)
-        print varname
-        print hist_tuple 
-        ## To add a new var/histogram, add the correct keyword (ex. pt or deltaphi) that matches what you defined in step 1/3
-        ## and set the right histogram arguments hist_tuple = (histname,histname, nBins, lowRange, highRange). Step 3/3
-
-        #hist_tuple = (histname,histname,20,0,1) # Arguments for binning that you would normally pass to a TH1
+        hist_tuple = (histname,histname,20,0,1) # Arguments for binning that you would normally pass to a TH1
         hist = a.GetActiveNode().DataFrame.Histo1D(hist_tuple,varname,'norm') # Project dataframe into a histogram (hist name/binning tuple, variable to plot from dataframe, weight)
         hist.GetValue() # This gets the actual TH1 instead of a pointer to the TH1
         out.Add(varname,hist) # Add it to our group
